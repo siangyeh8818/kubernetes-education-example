@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cafe-ingress
+  annotations:
+#    ingress.kubernetes.io/balance-algorithm: hdr(sessionID)
+#    ingress.kubernetes.io/session-cookie-hash: "sha1"
+#    nginx.com/sticky-cookie-services: "serviceName=coffee-svc srv_id expires=1h path=/coffee;serviceName=tea-svc srv_id expires=2h path=/tea"
+spec:
+  tls:
+  - hosts:
+    - traefik-ui.172.16.101.125.nip.io
+    secretName: cafe-secret
+  rules:
+  - host: traefik-ui.172.16.101.125.nip.io
+    http:
+      paths:
+      - path: /tea
+        backend:
+          serviceName: tea-svc
+          servicePort: 80
+      - path: /coffee
+        backend:
+          serviceName: coffee-svc
+          servicePort: 80

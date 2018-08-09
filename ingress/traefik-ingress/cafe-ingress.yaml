@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: cafe-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.backend.loadbalancer.sticky: "true"
+    traefik.ingress.kubernetes.io/affinity: "true"
+#    traefik.frontend.rule.key: "Host"
+#    traefik.frontend.rule.value: "foo"
+#    traefik.frontend.rule.key: "HeadersRegexp"
+#    traefik.frontend.rule.value: "Cookies, (foo|bar)"
+#    traefik.backend.loadbalancer.key: "sticky"
+#    traefik.backend.loadbalancer.value: "true"
+#    ingress.kubernetes.io/custom-request-headers: "route:12345"
+#    traefik.ingress.kubernetes.io/session-cookie-name: "serverset"
+spec:
+#  tls:
+#  - hosts:
+#    - cafe.example.com
+#    secretName: cafe-secret
+  rules:
+  - host: traefik-ui.172.16.101.125.nip.io
+    http:
+      paths:
+      - path: /tea
+        backend:
+          serviceName: tea-svc
+          servicePort: 80
+      - path: /coffee
+        backend:
+          serviceName: coffee-svc
+          servicePort: 80

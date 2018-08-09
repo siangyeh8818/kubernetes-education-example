@@ -1,0 +1,75 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: coffee
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: coffee
+  template:
+    metadata:
+      labels:
+        app: coffee
+    spec:
+      containers:
+      - name: coffee
+        image: 172.16.101.70/nginx-ingress/hello:plain-text
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: coffee-svc
+  annotations:
+    traefik.backend.loadbalancer.sticky: "true"
+    traefik.backend.loadbalancer.key: "sessionid"
+    traefik.backend.loadbalancer.value: "true"
+    traefik.backend.loadbalancer.method: "drr"
+#    traefik.frontend.headers.customResponseHeaders: "X-Custom-Header: foo" 
+#    traefik.backend.headers: "Content-Type,application/json" 
+#    ingress.kubernetes.io/custom-request-headers: "sessionid:2345"
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: coffee
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tea
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tea 
+  template:
+    metadata:
+      labels:
+        app: tea 
+    spec:
+      containers:
+      - name: tea 
+        image: 172.16.101.70/nginx-ingress/hello:plain-text
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tea-svc
+  labels:
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: tea
+  sessionAffinity: ClientIP
