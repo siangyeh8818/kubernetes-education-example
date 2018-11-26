@@ -1,0 +1,44 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: affinityrun
+spec:
+  #serviceName: "affinityrun"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: affinityrun
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      # soft antiaffinity for optimize placement
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - nginxstor
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: affinityrun
+        image: uwebserverv
+        ports:
+          - containerPort: 8000
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: hosttime
+      volumes:
+       - name: hosttime
+         hostPath:
+           path: /etc/localtime 
+  minReadySeconds: 5
+  strategy:
+    # indicate which strategy we want for rolling update
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1

@@ -1,0 +1,75 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: webservern
+spec:
+  #serviceName: "webservern"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: webservern
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      # soft antiaffinity for optimize placement
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution: 
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - webservern
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: webservern
+        image: 172.16.101.70/emotibot-k8s/uwebserverv6
+        #command: ["/bin/sh","-c"]
+        #args: ["sleep inf"]
+        readinessProbe:
+          #tcpSocket:
+          #  port: 8000
+          #httpGet:
+          #  path: /
+          #  port: 8000
+          #successThreshold: 1
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - ps x |grep python
+          initialDelaySeconds: 5
+          periodSeconds: 20
+
+        ports:
+          - containerPort: 8000
+        resources:
+          limits:
+            cpu: 1
+            memory: 512Mi
+          requests:
+            cpu: 1
+            memory: 512Mi
+
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: hosttime
+      volumes:
+       - name: hosttime
+         hostPath:
+           path: /etc/localtime 
+      #select node label if enable
+      #nodeSelector:
+      #  ebotrole: worker
+  minReadySeconds: 5
+  strategy:
+    # indicate which strategy we want for rolling update
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+

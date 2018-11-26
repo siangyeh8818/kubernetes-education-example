@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: busybox
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      name: busybox
+      labels:
+        app: busybox
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - busybox
+            topologyKey: kubernetes.io/hostname
+      containers:
+      - name: busybox
+        image: busybox:latest
+        #command: ["sleep","inf"]
+        command: ["touch","/opt/dataout/hello"]
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: hosttime
+        - mountPath: /opt/dataout
+          name: out
+      volumes:
+       - name: hosttime
+         hostPath:
+           path: /etc/localtime
+       - name: out
+         hostPath:
+           path: /mnt/data/dataout
+      restartPolicy: Never
+

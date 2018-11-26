@@ -1,0 +1,73 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nginxstor
+spec:
+  #serviceName: "nginxstor"
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: nginxstor
+      annotations:
+        pod.alpha.kubernetes.io/initialized: "true"
+    spec:
+      # soft antiaffinity for optimize placement
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution: 
+          - weight: 1
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - nginxstor
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: nginxstor
+        image: 192.168.51.130:5000/uwebserverv6
+        ports:
+          - containerPort: 8000
+            name: http
+          - containerPort: 8080
+            name: http2
+        volumeMounts:
+        - mountPath: /etc/localtime
+          name: hosttime
+      volumes:
+       - name: hosttime
+         hostPath:
+           path: /etc/localtime 
+  minReadySeconds: 5
+  strategy:
+    # indicate which strategy we want for rolling update
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginxstor
+  labels:
+    app: nginxstor
+spec:
+  ports:
+  - name: http
+    protocol: TCP
+    #port is loadbalancer port
+    port: 8001
+    # targetport is container port
+    targetPort: 8000
+  - name: http2
+    protocol: TCP
+    #port is loadbalancer port
+    port: 8081
+    # targetport is container port
+    targetPort: 8080
+  selector:
+    app: nginxstor
+
